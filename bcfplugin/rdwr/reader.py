@@ -50,7 +50,7 @@ from bcfplugin.rdwr.viewpoint import (Viewpoint, Component, Components, ViewSetu
         Bitmap)
 from bcfplugin.rdwr.threedvector import (Point, Line, Direction, ClippingPlane)
 
-SUPPORTED_VERSIONS = ["2.1"]
+SUPPORTED_VERSIONS = ["2.0", "2.1"]
 """ List of BCF versions that are supported by the plugin """
 
 logger = bcfplugin.createLogger(__name__)
@@ -740,8 +740,7 @@ def readBcfFile(bcfFile: str):
     version = getVersion(bcfExtractedPath, versionSchemaPath)
     if version not in SUPPORTED_VERSIONS:
         logger.error("BCF version {} is not supported by this plugin. Supported"\
-                "versions are: {}".format(version, SUPPORTED_VERSIONS),
-                file=sys.stderr)
+                "versions are: {}".format(version, SUPPORTED_VERSIONS))
         return None
 
     ### Validate project and build ###

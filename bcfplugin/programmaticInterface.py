@@ -66,13 +66,10 @@ from bcfplugin.rdwr.interfaces.identifiable import Identifiable
 from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
 from bcfplugin.rdwr.interfaces.state import State
 from bcfplugin.rdwr.interfaces.xmlname import XMLName
-from bcfplugin.frontend.viewController import CamType
-from bcfplugin import FREECAD, GUI
 
-__all__ = [ "CamType", "OperationResults", "deleteObject", "openProject", "closeProject",
-        "getTopics", "getComments", "getViewpoints", "openIfcFile",
+__all__ = [ "OperationResults", "deleteObject", "openProject", "closeProject",
+        "getTopics", "getComments", "getViewpoints", 
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
-        "activateViewpoint", "addCurrentViewpoint",
         "addComment", "addFile", "addLabel", "addDocumentReference", "addTopic",
         "copyFileToProject", "modifyComment", "modifyElement", "saveProject",
         "getTopicFromUUID"
@@ -84,21 +81,7 @@ utc = pytz.UTC
 curProject = None
 """ This variable holds the reference to the currently active data model. """
 
-App = None
-""" Alias for the FreeCAD module """
-
-Gui = None
-""" Alias for the FreeCADGui module """
-
 logger = bcfplugin.createLogger(__name__)
-
-if GUI:
-    import frontend.viewController as vCtrl
-    import FreeCADGui as Gui
-
-if FREECAD:
-    import FreeCAD as App
-
 
 class OperationResults(Enum):
 
@@ -265,101 +248,6 @@ def _filterCommentsForViewpoint(comments: List[Tuple[str, m.Comment]], viewpoint
         cm if (cm[1].viewpoint and cm[1].viewpoint.id == realVpRef.id) else None
     filtered = list(filter(f, comments))
     return filtered
-
-
-def openIfcFile(path: str):
-
-    """ Opens an IfcFile behind path. IfcOpenShell is required! """
-
-    logger.info("Opening IFC file {} in FreeCAD".format(path))
-    if not os.path.exists(path):
-        logger.error("File {} could not be found. Please supply a path that"\
-                "exists")
-        return OperationResults.FAILURE
-
-    if not FREECAD:
-        logger.error("I am not running inside FreeCAD. {} can only be opened"\
-                "inside FreeCAD")
-        return OperationResults.FAILURE
-
-    import importIFC as ifc
-    ifc.open(path.encode("utf-8"))
-    docName = join(os.path.basename(path).split('.')[:-1], '')
-    App.setActiveDocument(docName)
-    App.ActiveDocument = App.getDocument(docName)
-    Gui.ActiveDocument = Gui.getDocument(docName)
-    Gui.sendMsgToActiveView("ViewFit")
-
-    return OperationResults.SUCCESS
-
-
-def activateViewpoint(viewpoint: Viewpoint,
-        camType: CamType = CamType.PERSPECTIVE):
-
-    """ Sets the camera view the model from the specified viewpoint."""
-
-    logger.info("Activating viewpoint")
-    if not (GUI and FREECAD):
-        logger.error("Application is running either not inside FreeCAD or without"\
-                " Gui. Thus cannot set camera position")
-        return OperationResults.FAILURE
-
-    if (Gui.ActiveDocument is None or
-            Gui.ActiveDocument.ActiveView is None):
-        logger.error("There is no document or view active. Thus cannot apply"\
-                " any viewpoint settings.")
-        return OperationResults.FAILURE
-
-    # Apply camera settings
-    camSettings = None
-    if camType == CamType.ORTHOGONAL:
-        camSettings = viewpoint.oCamera
-    elif camType == CamType.PERSPECTIVE:
-        camSettings = viewpoint.pCamera
-    else:
-        logger.error("Camera type {} does not exist.".format(camType))
-        return OperationResults.FAILURE
-
-    if camSettings is None:
-        logger.error("No camera settings found in viewpoint"\
-                " {}".format(viewpoint))
-        return OperationResults.FAILURE
-
-    if camType == CamType.ORTHOGONAL:
-        vCtrl.setOCamera(camSettings)
-    elif camType == CamType.PERSPECTIVE:
-        vCtrl.setPCamera(camSettings)
-
-    # Apply visibility component settings
-    # Thereby the visibility of each specified component, the colour and its
-    # selection is set.
-    # NOTE: ViewSetupHints are not applied atm
-    if viewpoint.components is not None:
-        components = viewpoint.components
-        vCtrl.applyVisibilitySettings(components.visibilityDefault,
-                components.visibilityExceptions)
-        vCtrl.colourComponents(components.colouring)
-        vCtrl.selectComponents(components.selection)
-
-    # check if any clipping planes are defined and create everyone if so.
-    if (viewpoint.clippingPlanes is not None and
-            len(viewpoint.clippingPlanes) > 0):
-        for clip in viewpoint.clippingPlanes:
-            vCtrl.createClippingPlane(clip)
-
-
-def resetView():
-
-    """ Reset FreeCAD's view to the state it was prior to activating the
-    first viewpoint """
-
-    logger.info("Resetting view to original state")
-    if not (GUI and FREECAD):
-        logger.error("Application is running either not inside FreeCAD or without"\
-                " GUI. Thus cannot set camera position")
-        return OperationResults.FAILURE
-
-    vCtrl.resetView()
 
 
 def _isIfcGuid(guid: str):
@@ -636,9 +524,6 @@ def getRelevantIfcFiles(topic: Topic):
     hasReference = lambda file: file.reference != file._reference.defaultValue
     files = filter(lambda f: hasIfcProjectId(f) and hasReference(f), files)
 
-    logger.info("If you want to open one of the files in FreeCAD run:\n"\
-            "\t plugin.openIfcProject(file)")
-
     return list(files)
 
 
@@ -805,76 +690,6 @@ def addViewpointToComment(comment: Comment, viewpoint: ViewpointReference, autho
     writer.addProjectUpdate(curProject, realComment._modAuthor, oldAuthor)
 
     return _handleProjectUpdate("Could not assign viewpoint.", projectBackup)
-
-
-def addCurrentViewpoint(topic: Topic):
-
-    """ Reads the current view settings and adds them as viewpoint to `topic`
-
-    The view settings include:
-        - selection state of each ifc object
-        - color of each ifc object
-        - camera position and orientation
-    """
-
-    global curProject
-    projectBackup = copy.deepcopy(curProject)
-    logger.info("Adding current view settings as viewpoint to topic"\
-            " {}".format(topic.title))
-
-    if not (GUI and FREECAD):
-        logger.error("Application is running either not inside FreeCAD or without"\
-                " GUI. Thus cannot set camera position")
-        return OperationResults.FAILURE
-
-    doNotAdd = False
-    if not isProjectOpen():
-        logger.info("Project is not open. Viewpoint cannot be added to any"\
-                " topic")
-        doNotAdd = True
-
-    realTopic = _searchRealTopic(topic)
-    if realTopic is None:
-        logger.info("Viewpoint will not be added.")
-        doNotAdd = True
-
-    camSettings = None
-    try:
-        camSettings = vCtrl.readCamera()
-    except AttributeError as err:
-        logger.error("Camera settings could not be read. Make sure the 3D"\
-                " view is active.")
-        logger.error(str(err))
-        return OperationResults.FAILURE
-    else:
-        if camSettings is None:
-            return OperationResults.FAILURE
-
-    if not doNotAdd:
-        realMarkup = realTopic.containingObject
-        vpGuid = uuid4()
-        oCamera = None
-        pCamera = None
-        if isinstance(camSettings, OrthogonalCamera):
-            oCamera = camSettings
-        elif isinstance(camSettings, PerspectiveCamera):
-            pCamera = camSettings
-
-        logger.info(str(camSettings))
-        vp = Viewpoint(vpGuid, None, oCamera, pCamera)
-        vp.state = State.States.ADDED
-        vpFileName = writer.generateViewpointFileName(realMarkup)
-        vpRef = ViewpointReference(vpGuid, Uri(vpFileName), None, -1, realMarkup,
-                State.States.ADDED)
-        vpRef.viewpoint = vp
-        realMarkup.viewpoints.append(vpRef)
-
-        writer.addProjectUpdate(curProject, vpRef, None)
-        return _handleProjectUpdate("Viewpoint could not be added. Rolling"\
-                " back to previous state", projectBackup)
-
-    print(camSettings)
-    return OperationResults.SUCCESS
 
 
 def addTopic(title: str, author: str, type: str = "", description = "",

@@ -608,8 +608,6 @@ def _createViewpoint(element, topicPath):
     if element.file is None:
         raise RuntimeWarning("The new viewpoint does not have a filename."\
                 "Generating a new one!")
-        # element.containingObject == Markup
-        element.file = generateViewpointFileName(element.containingObject)
 
     vp = element.viewpoint
     visinfoRootEtElem = ET.Element("", {})
