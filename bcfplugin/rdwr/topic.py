@@ -477,7 +477,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         cpy._index = cpyindex
         cpy.labels = cpylabels
         cpy._modDate = cpymoddate
-        cpy._modauthor = cpymodauthor
+        cpy._modAuthor = cpymodauthor
         cpy._dueDate = cpyduedate
         cpy._assignee = cpyassignee
         cpy._description = cpydescription
