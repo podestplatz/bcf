@@ -10,7 +10,7 @@
 			<Reference>https://www.example.org/example.ifc</Reference>
 		</File>
 	</Header>
-	<Topic Guid="2e92784b-80fc-4e0e-ac02-b424dfd8e664" TopicStatus="Active" TopicType="Clash">
+	<Topic Guid="2e92784b-80fc-4e0e-ac02-b424dfd8e664" TopicType="Clash" TopicStatus="Active">
 		<Title>Intersection ventilation and wall</Title>
 		<Priority>Normal</Priority>
 		<Index>11</Index>

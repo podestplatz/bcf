@@ -27,17 +27,17 @@ from shutil import rmtree
 from uuid import UUID
 from xmlschema import XMLSchemaValidationError
 
-sys.path.insert(0, "../")
-import util as util
-import rdwr.reader as reader
-import rdwr.project as project
-import rdwr.modification as modification
-import rdwr.topic as topic
-import rdwr.uri as uri
-import rdwr.markup as markup
-import rdwr.viewpoint as viewpoint
-import rdwr.threedvector as tdv
-import rdwr.interfaces.hierarchy as hierarchy
+sys.path.insert(0, "../..")
+import bcfplugin.util as util
+import bcfplugin.rdwr.reader as reader
+import bcfplugin.rdwr.project as project
+import bcfplugin.rdwr.modification as modification
+import bcfplugin.rdwr.topic as topic
+import bcfplugin.rdwr.uri as uri
+import bcfplugin.rdwr.markup as markup
+import bcfplugin.rdwr.viewpoint as viewpoint
+import bcfplugin.rdwr.threedvector as tdv
+import bcfplugin.rdwr.interfaces.hierarchy as hierarchy
 
 
 class BuildProjectTest(unittest.TestCase):

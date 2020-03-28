@@ -178,7 +178,7 @@ def getFileOfElement(element):
             raise e
         else:
             file = elementHierarchy[vpRefIndex].file
-            return viewpointFile
+            return file
 
     elif "Markup" in strHierarchy:
         file = markupFileName
@@ -1181,4 +1181,3 @@ def createNewBcfFile(name):
     addElement(project)
 
     return project
-

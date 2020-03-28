@@ -21,6 +21,7 @@ import sys
 import copy
 import pprint
 import difflib
+import logging
 import unittest
 import xmlschema
 import dateutil.parser
@@ -31,30 +32,34 @@ from shutil import rmtree
 from shutil import copyfile
 from xmlschema import XMLSchemaValidationError
 
-sys.path.insert(0, "../")
-import util as util
-import rdwr.uri as uri
-import rdwr.topic as topic
-import rdwr.reader as reader
-import rdwr.writer as writer
-import rdwr.markup as markup
-import rdwr.interfaces.state as s
-import rdwr.project as project
-import rdwr.threedvector as tdv
-import rdwr.viewpoint as viewpoint
-import rdwr.modification as modification
-import rdwr.interfaces.hierarchy as hierarchy
+sys.path.insert(0, "../..")
+import bcfplugin
+import bcfplugin.util as util
+import bcfplugin.rdwr.uri as uri
+import bcfplugin.rdwr.topic as topic
+import bcfplugin.rdwr.reader as reader
+import bcfplugin.rdwr.writer as writer
+import bcfplugin.rdwr.markup as markup
+import bcfplugin.rdwr.interfaces.state as s
+import bcfplugin.rdwr.project as project
+import bcfplugin.rdwr.threedvector as tdv
+import bcfplugin.rdwr.viewpoint as viewpoint
+import bcfplugin.rdwr.modification as modification
+import bcfplugin.rdwr.interfaces.hierarchy as hierarchy
+
+logger = bcfplugin.createLogger(__name__)
+
 
 def setupBCFFile(testFile, testFileDir, testTopicDir, testBCFName):
 
     cmd = "cp {} {}/{}/markup.bcf".format(testFile,
         testFileDir, testTopicDir)
-    project.debug("Executing: {}".format(cmd))
+    logger.debug("Executing: {}".format(cmd))
     os.system(cmd)
 
     cmd = "cd ./writer_tests && zip -q {} {}/markup.bcf".format(testBCFName,
         testTopicDir)
-    project.debug("Executing: {}".format(cmd))
+    logger.debug("Executing: {}".format(cmd))
     os.system("cd ./writer_tests && zip -q {} {}/markup.bcf".format(testBCFName,
         testTopicDir))
 
@@ -156,12 +161,12 @@ class AddElementTests(unittest.TestCase):
                 str(newMarkup.topic.xmlId))
         folderExists = os.path.exists(folderPath)
         if not folderExists:
-            project.debug("Folder does not exist")
+            logger.debug("Folder does not exist")
 
         markupFilePath = os.path.join(folderPath, "markup.bcf")
         markupFileExists = os.path.exists(markupFilePath)
         if not markupFileExists:
-            project.debug("Markup file does not exist")
+            logger.debug("Markup file does not exist")
 
         self.assertTrue(markupFileExists and folderExists)
 
@@ -189,10 +194,11 @@ class AddElementTests(unittest.TestCase):
         if not equal:
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_comment.bcf")
+            logger.debug("copiing erroneous file to"\
+                    " {}".format(wrongFileDestination))
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
+            logger.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
             print("Following is the diff between the file that was generated"\
                     " and the prepared file:")
             pprint.pprint(diff)
@@ -221,10 +227,9 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_comment_modification.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("Following is the diff between the file that was generated"\
+            logger.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            logger.debug("Following is the diff between the file that was generated"\
                     " and the prepared file:")
             pprint.pprint(diff)
         self.assertTrue(equal)
@@ -255,12 +260,10 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_lone_viewpoint.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
-                " and the prepared file:".format(
-                    self.test_add_viewpointreference.__name__))
+            logger.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            logger.debug("Following is the diff between the file that was generated"\
+                " and the prepared file:")
             pprint.pprint(diff)
         self.assertTrue(equal)
 
@@ -291,24 +294,20 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_full_viewpoint.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
-                " and the prepared file:".format(
-                        self.test_add_viewpoint.__name__))
+            logger.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            logger.debug("Following is the diff between the file that was generated"\
+                " and the prepared file:")
             pprint.pprint(vpRefDiff)
 
         if not vpEqual:
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "viewpoint_add_full_viewpoint.bcfv")
             copyfile(self.testFileDestinations[2], wrongFileDestination)
-            print("writer_tests.{}(): copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            print("writer_tests.{}(): Following is the diff between the file that was generated"\
-                " and the prepared file:".format(
-                        self.test_add_viewpoint.__name__))
+            logger.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            logger.debug("Following is the diff between the file that was generated"\
+                " and the prepared file:")
             pprint.pprint(vpDiff)
         self.assertTrue(vpRefEqual and vpEqual)
 
@@ -334,7 +333,7 @@ class AddElementTests(unittest.TestCase):
             containingElement = header,
             state = s.State.States.ADDED)
         header.files.append(newFile)
-        project.debug("type of newFile is"
+        logger.debug("type of newFile is"
                 " {}".format(
                     type(newFile)))
 
@@ -345,13 +344,10 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_file.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            project.debug("copied erroneous file to"\
-                    " {}".format(self.test_add_file.__name__,
-                        wrongFileDestination))
-            project.debug("Following is the diff between the file that was generated"\
-                " and the prepared file:".format(
-                    self.test_add_viewpointreference.__name__,
-                    wrongFileDestination))
+            logger.debug("copied erroneous file to"\
+                    " {}".format(wrongFileDestination))
+            logger.debug("Following is the diff between the file that was generated"\
+                " and the prepared file:".format(wrongFileDestination))
             pprint.pprint(diff)
         self.assertTrue(equal)
 
@@ -377,9 +373,9 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_file_attribute.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            project.debug("copied erroneous file to"\
+            logger.debug("copied erroneous file to"\
                     " {}".format(wrongFileDestination))
-            project.debug("Following is the diff between the file that was generated"\
+            logger.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
                    wrongFileDestination))
             pprint.pprint(diff)
@@ -407,9 +403,9 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_file_attribute2.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            project.debug("copied erroneous file to"\
+            logger.debug("copied erroneous file to"\
                     " {}".format(wrongFileDestination))
-            project.debug("Following is the diff between the file that was generated"\
+            logger.debug("Following is the diff between the file that was generated"\
                     " and the prepared file:".format(wrongFileDestination))
             pprint.pprint(diff)
         self.assertTrue(equal)
@@ -436,9 +432,9 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_doc_ref_attribute.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            project.debug("copied erroneous file to"\
+            logger.debug("copied erroneous file to"\
                     " {}".format(wrongFileDestination))
-            project.debug("Following is the diff between the file that was generated"\
+            logger.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
                     wrongFileDestination))
             pprint.pprint(diff)
@@ -465,9 +461,9 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_bim_snippet.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            project.debug("copied erroneous file to"\
+            logger.debug("copied erroneous file to"\
                     " {}".format(wrongFileDestination))
-            project.debug("Following is the diff between the file that was generated"\
+            logger.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
                     wrongFileDestination))
             pprint.pprint(diff)
@@ -494,9 +490,9 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_label.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            project.debug("copied erroneous file to"\
+            logger.debug("copied erroneous file to"\
                     " {}".format(wrongFileDestination))
-            project.debug("Following is the diff between the file that was generated"\
+            logger.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
                     wrongFileDestination))
             pprint.pprint(diff)
@@ -523,9 +519,9 @@ class AddElementTests(unittest.TestCase):
             wrongFileDestination = os.path.join(self.testFileDir, "error_files",
                     "markup_add_assignedTo.bcf")
             copyfile(self.testFileDestinations[0], wrongFileDestination)
-            project.debug("copied erroneous file to"\
+            logger.debug("copied erroneous file to"\
                     " {}".format(wrongFileDestination))
-            project.debug("Following is the diff between the file that was generated"\
+            logger.debug("Following is the diff between the file that was generated"\
                 " and the prepared file:".format(
                     wrongFileDestination))
             pprint.pprint(diff)
@@ -575,7 +571,7 @@ class GetEtElementFromFileTests(unittest.TestCase):
         finding = writer.getEtElementFromFile(xmlroot, commentToFind)
 
         expectedComment = list(xmlroot)[3]
-        project.debug("writer_tests.test_findComment(): found comment:"\
+        logger.debug("writer_tests.test_findComment(): found comment:"\
                 "\n\t{}\nand expected comment\n{}"\
                 "\n=====".format(ET.tostring(finding),
                     ET.tostring(expectedComment)))
@@ -602,7 +598,7 @@ class GetEtElementFromFileTests(unittest.TestCase):
         commentToFind = p.topicList[0].comments[1]
         finding = writer.getEtElementFromFile(xmlroot, commentToFind)
 
-        project.debug("writer_tests.test_findComment2(): found comment:"\
+        logger.debug("writer_tests.test_findComment2(): found comment:"\
                 "\n\t{}\nand expected comment\n{}"\
                 "\n=====".format(ET.tostring(finding),
                     ET.tostring(expectedComment)))
@@ -629,7 +625,7 @@ class GetEtElementFromFileTests(unittest.TestCase):
         labelToFind = p.topicList[0].topic.labels[2]
         finding = writer.getEtElementFromFile(xmlroot, labelToFind)
 
-        project.debug("writer_tests.test_findLabelByText(): found label:"\
+        logger.debug("writer_tests.test_findLabelByText(): found label:"\
                 "\n\t{}\nand expected label\n{}"\
                 "\n=====".format(ET.tostring(finding),
                     ET.tostring(expectedLabel)))
@@ -657,7 +653,7 @@ class GetEtElementFromFileTests(unittest.TestCase):
         fileToFind = p.topicList[0].header.files[3]
         finding = writer.getEtElementFromFile(xmlroot, fileToFind)
 
-        project.debug("writer_tests.test_findFileByAttribute(): found file:"\
+        logger.debug("writer_tests.test_findFileByAttribute(): found file:"\
                 "\n\t{}\nand expected file\n{}"\
                 "\n=====".format(ET.tostring(finding),
                     ET.tostring(expectedFile)))
@@ -680,12 +676,10 @@ def handleFileCheck(expectedFile, fileName, testFileDir, testTopicDir, testBCFNa
         testFilePath = os.path.join(util.getSystemTmp(), testBCFName,
                 testTopicDir, fileName)
         copyfile(testFilePath, wrongFileDestination)
-        print("writer_tests.{}(): copied erroneous file to"\
-                " {}".format(handleFileCheck.__name__,
-                    wrongFileDestination))
-        print("writer_tests.{}(): Following is the diff between the file that was generated"\
+        logger.debug("copied erroneous file to"\
+                " {}".format(wrongFileDestination))
+        logger.debug("Following is the diff between the file that was generated"\
             " and the prepared file:".format(
-                handleFileCheck.__name__,
                 wrongFileDestination))
         pprint.pprint(diff)
 
