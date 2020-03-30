@@ -461,6 +461,7 @@ def getViewpoints(topic: Topic, realViewpoint = True):
     else:
         viewpoints = [ (str(vpRef.file), copy.deepcopy(vpRef))
                 for vpRef in markup.viewpoints ]
+        viewpoints = sorted(viewpoints, key=lambda viewpoint: viewpoint[1].index)
 
 
     return viewpoints
