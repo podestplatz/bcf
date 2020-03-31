@@ -293,8 +293,7 @@ class Attribute(XMLName, Hierarchy, State, Identifiable):
         Hierarchy.__init__(self, containingElement)
         State.__init__(self, state)
         Identifiable.__init__(self)
-        # use default value if `value is None`
-        self.value = value if value else defaultValue
+        self.value = defaultValue if value is None else value
         self.defaultValue = defaultValue
 
 
