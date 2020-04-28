@@ -86,7 +86,6 @@ class Bitmap(Hierarchy, State, XMLName):
         """ Create a deepcopy of the object without copying `containingObject`
         """
 
-        cpyid = deepcopy(self.id, memo)
         cpyformat = deepcopy(self.format, memo)
         cpyreference = deepcopy(self.reference, memo)
         cpylocation = deepcopy(self.location, memo)
