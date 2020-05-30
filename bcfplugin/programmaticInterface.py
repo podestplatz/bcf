@@ -68,11 +68,11 @@ from bcfplugin.rdwr.interfaces.state import State
 from bcfplugin.rdwr.interfaces.xmlname import XMLName
 
 __all__ = [ "OperationResults", "deleteObject", "openProject", "newProject",
-        "closeProject", "getTopics", "getComments", "getViewpoints",
-        "getRelevantIfcFiles", "getAdditionalDocumentReferences",
-        "addComment", "addFile", "addLabel", "addDocumentReference", "addTopic",
-        "copyFileToProject", "modifyComment", "modifyElement", "saveProject",
-        "getTopicFromUUID"
+        "getProjectName", "setProjectName", "closeProject", "getTopics",
+        "getComments", "getViewpoints", "getRelevantIfcFiles",
+        "getAdditionalDocumentReferences", "addComment", "addFile", "addLabel",
+        "addDocumentReference", "addTopic", "copyFileToProject",
+        "modifyComment", "modifyElement", "saveProject", "getTopicFromUUID"
         ]
 
 utc = pytz.UTC
@@ -184,11 +184,13 @@ def openProject(bcfFile):
     return OperationResults.SUCCESS
 
 
-def newProject():
+def newProject(name=None):
     """ Creates a new project """
 
     global curProject
-    curProject = writer.createNewBcfFile("New Project")
+    if name is None:
+        name = "New Project"
+    curProject = writer.createNewBcfFile(name)
     return OperationResults.SUCCESS
 
 
@@ -366,6 +368,18 @@ def getProjectName():
     """ Return the name of the open project """
 
     return curProject.name
+
+
+def setProjectName(name):
+
+    """ Sets the name of the open project """
+
+    projectBackup = copy.deepcopy(curProject)
+    oldName = curProject.name
+    curProject.name = name
+    curProject._name.state = State.States.MODIFIED
+    writer.addProjectUpdate(curProject, curProject._name, oldName)
+    return _handleProjectUpdate("Could not set project name.", projectBackup)
 
 
 def getTopics():
@@ -1045,7 +1059,7 @@ def modifyComment(comment: Comment, newText: str, author: str):
     if realComment is None:
         logger.error("Comment {} could not be found in the data model. Not"\
                 "modifying anything".format(comment))
-        return OperationResulsts.FAILURE
+        return OperationResults.FAILURE
 
     oldVal = realComment.comment
     realComment.comment = newText

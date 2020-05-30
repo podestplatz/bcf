@@ -888,9 +888,13 @@ def modifyElement(element, previousValue):
 
     bcfPath = util.getBcfDir()
     # path of the topic `element` is contained in
-    topicPath = os.path.join(bcfPath, getTopicDir(element))
-    # filepath of the file `element` is contained in
-    filePath = os.path.join(topicPath, fileName)
+    topicDir = getTopicDir(element)
+    if topicDir:
+        topicPath = os.path.join(bcfPath, getTopicDir(element))
+        # filepath of the file `element` is contained in
+        filePath = os.path.join(topicPath, fileName)
+    else:
+        filePath = os.path.join(bcfPath, fileName)
     # parsed version of the file
     xmlfile = ET.parse(filePath)
     xmlroot = xmlfile.getroot()
@@ -934,7 +938,7 @@ def addProjectUpdate(project: p.Project, element, prevVal):
                 " {}".format(element.id, projectCpy))
     prevValCpy = None
     if prevVal is not None:
-        prevValCpy = copy.deepcopy(prevVal)
+        prevValCpy = c.deepcopy(prevVal)
 
     if element.state != iS.State.States.ORIGINAL:
         logger.debug("Adding update of {} to"
@@ -976,7 +980,7 @@ def handleAddElement(element, oldVal):
         writeHandlerErrMsg(msg, err)
         return False
     except Exception as exc:
-        msg = "An unknown excption occured while adding"\
+        msg = "An unknown exception occured while adding"\
             " {}".format(element)
         writeHandlerErrMsg(msg, exc)
         return False
@@ -1005,7 +1009,7 @@ def handleDeleteElement(element, oldVal):
         return False
 
     except Exception as exc:
-        msg = "An unknown excption occured while adding"\
+        msg = "An unknown exception occured while deleting"\
             " {}".format(element)
         writeHandlerErrMsg(msg, exc)
         return False
@@ -1032,7 +1036,7 @@ def handleModifyElement(element, prevVal):
         writeHandlerErrMsg(msg, err)
         return False
     except Exception as exc:
-        msg = "An unknown excption occured while adding"\
+        msg = "An unknown exception occured while modifying"\
             " {}".format(element)
         writeHandlerErrMsg(msg, exc)
         return False
