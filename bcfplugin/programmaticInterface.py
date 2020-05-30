@@ -67,8 +67,8 @@ from bcfplugin.rdwr.interfaces.hierarchy import Hierarchy
 from bcfplugin.rdwr.interfaces.state import State
 from bcfplugin.rdwr.interfaces.xmlname import XMLName
 
-__all__ = [ "OperationResults", "deleteObject", "openProject", "closeProject",
-        "getTopics", "getComments", "getViewpoints", 
+__all__ = [ "OperationResults", "deleteObject", "openProject", "newProject",
+        "closeProject", "getTopics", "getComments", "getViewpoints",
         "getRelevantIfcFiles", "getAdditionalDocumentReferences",
         "addComment", "addFile", "addLabel", "addDocumentReference", "addTopic",
         "copyFileToProject", "modifyComment", "modifyElement", "saveProject",
@@ -181,6 +181,14 @@ def openProject(bcfFile):
         return OperationResults.FAILURE
 
     curProject = project
+    return OperationResults.SUCCESS
+
+
+def newProject():
+    """ Creates a new project """
+
+    global curProject
+    curProject = writer.createNewBcfFile("New Project")
     return OperationResults.SUCCESS
 
 

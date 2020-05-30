@@ -1177,7 +1177,6 @@ def createNewBcfFile(name):
 
     newBcfDir = os.path.join(newTmpDir, name)
     util.setBcfDir(newBcfDir)
-    os.mkdir(newBcfDir)
     addElement(project)
 
     return project
