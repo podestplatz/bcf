@@ -399,6 +399,9 @@ def getTopics():
 
     topics = list()
     for markup in curProject.topicList:
+        if markup.topic is None:
+            continue
+
         topic = copy.deepcopy(markup.topic)
         topics.append((topic.title, topic))
 

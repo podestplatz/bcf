@@ -33,20 +33,20 @@ from shutil import copyfile
 from xmlschema import XMLSchemaValidationError
 
 sys.path.insert(0, "../../") # plugin root
-sys.path.insert(0, "../") # source root
-import util as util
-import rdwr.uri as uri
-import rdwr.topic as topic
-import rdwr.reader as reader
-import rdwr.writer as writer
-import rdwr.markup as markup
-import rdwr.interfaces.state as s
-import rdwr.project as project
-import rdwr.threedvector as tdv
-import rdwr.viewpoint as viewpoint
-import rdwr.modification as modification
-import programmaticInterface as pI
-import rdwr.interfaces.hierarchy as hierarchy
+import bcfplugin
+import bcfplugin.util as util
+import bcfplugin.rdwr.uri as uri
+import bcfplugin.rdwr.topic as topic
+import bcfplugin.rdwr.reader as reader
+import bcfplugin.rdwr.writer as writer
+import bcfplugin.rdwr.markup as markup
+import bcfplugin.rdwr.interfaces.state as s
+import bcfplugin.rdwr.project as project
+import bcfplugin.rdwr.threedvector as tdv
+import bcfplugin.rdwr.viewpoint as viewpoint
+import bcfplugin.rdwr.modification as modification
+import bcfplugin.programmaticInterface as pI
+import bcfplugin.rdwr.interfaces.hierarchy as hierarchy
 
 logger = bcfplugin.createLogger(__name__)
 
@@ -161,11 +161,13 @@ class DeleteObjectTest(unittest.TestCase):
 
         objectToDelete = pI.curProject.topicList[0].header.files[0]
         objectToDelete.state = s.State.States.DELETED
+        oldHeaderFiles = copy.deepcopy(pI.curProject.topicList[0].header.files)
         pI.deleteObject(objectToDelete)
         newProject = pI.curProject
 
         searchResult = newProject.searchObject(objectToDelete)
-        self.assertTrue(len(newProject.topicList[0].header.files) == 1 and
+        newHeaderFiles = newProject.topicList[0].header.files
+        self.assertTrue(len(oldHeaderFiles) - 1 == len(newHeaderFiles) and
                 searchResult == None)
 
 
@@ -275,6 +277,30 @@ class DeleteObjectTest(unittest.TestCase):
 
         self.assertTrue(len(vpList) == 0 and searchResult == None and
                 vpFileExists)
+
+
+    def test_deleteTopic(self):
+
+        """Test the correct deletion of a topic."""
+
+        srcFilePath = os.path.join(self.testFileDir, self.testFiles[0])
+        testFile = setupBCFFile(srcFilePath,
+                                self.testFileDir,
+                                self.testTopicDir,
+                                self.testBCFName)
+        print(f"Parsing file {srcFilePath}")
+        if pI.openProject(testFile) == pI.OperationResults.FAILURE:
+            print(f"Could not open file {srcFilePath}")
+
+        oldTopicList = copy.deepcopy(pI.getTopics())
+        objectToDelete = pI.getTopics()[0][1]
+        objectToDelete.state = s.State.States.DELETED
+        result = pI.deleteObject(objectToDelete)
+        if result == pI.OperationResults.FAILURE:
+            self.assertTrue(False, "Deletion failed!")
+
+        newTopicList = pI.getTopics()
+        self.assertTrue(len(oldTopicList) - 1 == len(newTopicList))
 
 
 class GetTopicsTest(unittest.TestCase):
