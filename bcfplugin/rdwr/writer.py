@@ -1160,7 +1160,7 @@ def zipToBcfFile(bcfRootPath, dstFile):
 
     logger.debug("Writing working directory to file {}".format(dstFile))
     with util.cd(bcfRootPath):
-        with zipfile.ZipFile(dstFile, "w") as zipFile:
+        with zipfile.ZipFile(dstFile, "w", zipfile.ZIP_DEFLATED) as zipFile:
             recursiveZipping("./", zipFile)
 
     util.setDirty(False)
