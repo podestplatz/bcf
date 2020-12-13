@@ -216,6 +216,110 @@ class DocumentReference(Hierarchy, State, XMLName, Identifiable):
         return searchResult
 
 
+class RelatedTopic(Hierarchy, State, XMLName, Identifiable):
+
+    """ Represents the XML type markup.xsd:RelatedTopic """
+
+    def __init__(self,
+            guid: UUID = None,
+            containingElement = None,
+            state: State.States = State.States.ORIGINAL):
+
+        Hierarchy.__init__(self, containingElement)
+        State.__init__(self, state)
+        XMLName.__init__(self)
+        Identifiable.__init__(self)
+        self._guid = Attribute(guid, "Guid", UUID(int=0), self)
+
+    def __deepcopy__(self, memo):
+
+        """ Create a deepcopy of the object without copying `containingObject`
+        """
+
+        cpyid = deepcopy(self.id, memo)
+        cpyguid = deepcopy(self._guid, memo)
+
+        cpy = RelatedTopic()
+        cpy._guid = cpyguid
+        cpy.id = cpyid
+        cpy.state = self.state
+
+        members = [ cpy._guid ]
+        listSetContainingElement(members, cpy)
+
+        return cpy
+
+
+    def __eq__(self, other):
+
+        """
+        Returns true if every variable member of both classes are the same
+        """
+
+        if type(self) != type(other):
+            return False
+
+        return self.guid == other.guid
+
+    def __str__(self):
+
+        ret_str = ("RelatedTopic(guid='{}')").format(self.guid)
+        return ret_str
+
+
+    @property
+    def guid(self):
+        return self._guid.value
+
+    @guid.setter
+    def guid(self, newVal):
+        if isinstance(newVal, str):
+            self._guid.value = UUID(newVal)
+        elif isinstance(newVal, UUID):
+            self._guid.value = newVal
+
+    def getEtElement(self, elem):
+
+        """
+        Convert the contents of the object to an xml.etree.ElementTree.Element
+        representation. `element` is the object of type xml.e...Tree.Element
+        which shall be modified and returned.
+        """
+
+        print('in the get et element of relatedtopic')
+        #elem.tag = "RelatedTopic"
+        elem.tag = self.xmlName
+        elem.attrib["Guid"] = str(self.guid)
+
+        return elem
+
+
+    def getStateList(self):
+
+        stateList = list()
+        if not self.isOriginal():
+            stateList.append((self.state, self))
+
+        stateList += self._guid.getStateList()
+
+        return stateList
+
+
+    def searchObject(self, object):
+
+        if not issubclass(type(object), Identifiable):
+            return None
+
+        id = object.id
+        if self.id == id:
+            return self
+
+        members = [ self._guid ]
+        searchResult = searchListObject(object, members)
+        return searchResult
+
+
+
 class BimSnippet(Hierarchy, State, XMLName, Identifiable):
 
     """ Represents the XML type markup.xsd:BimSnippet """
@@ -395,7 +499,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             assignee: str = "",
             description: str = "",
             stage: str = "",
-            relatedTopics: List[UUID] = [],
+            relatedTopics: List[RelatedTopic] = [],
             bimSnippet: BimSnippet = None,
             containingElement = None,
             state: State.States = State.States.ORIGINAL):
@@ -427,8 +531,7 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
         self._description = SimpleElement(description, "Description",
                 "", self)
         self._stage = SimpleElement(stage, "Stage", "", self)
-        self.relatedTopics = SimpleList(relatedTopics, "RelatedTopic",
-                UUID(int=0), self)
+        self.relatedTopics = relatedTopics
         self.bimSnippet = bimSnippet
 
         # set containingObjecf for all document references
@@ -818,7 +921,8 @@ class Topic(Hierarchy, XMLIdentifiable, State, XMLName, Identifiable):
             docRefElem = docRef.getEtElement(docRefElem)
 
         for relTopic in self.relatedTopics:
-            relTopicElem = self._createSimpleNode(elem, relTopic)
+            relatedTopicElem = ET.SubElement(elem, relTopic.xmlName)
+            relatedTopicElem = relTopic.getEtElement(relatedTopicElem)
 
         return elem
 

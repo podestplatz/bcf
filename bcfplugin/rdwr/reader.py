@@ -44,7 +44,7 @@ import bcfplugin.util as util
 from bcfplugin.rdwr.project import Project
 from bcfplugin.rdwr.uri import Uri as Uri
 from bcfplugin.rdwr.markup import (Comment, Header, HeaderFile, ViewpointReference, Markup)
-from bcfplugin.rdwr.topic import (Topic, BimSnippet, DocumentReference)
+from bcfplugin.rdwr.topic import (Topic, RelatedTopic, BimSnippet, DocumentReference)
 from bcfplugin.rdwr.viewpoint import (Viewpoint, Component, Components, ViewSetupHints,
         ComponentColour, PerspectiveCamera, OrthogonalCamera, BitmapFormat,
         Bitmap)
@@ -265,6 +265,17 @@ def buildBimSnippet(snippetDict: Dict):
     return bimSnippet
 
 
+def buildRelatedTopic(relatedTopicDict: Dict):
+
+    logger.debug("Building new RelatedTopic object")
+    guid = UUID(relatedTopicDict["@Guid"])
+
+    relatedTopic = RelatedTopic(guid)
+
+    logger.debug("New RelatedTopic object created {}".format(relatedTopic))
+    return relatedTopic
+
+
 def buildDocRef(docDict: Dict):
 
     logger.debug("Building new DocumentReference object")
@@ -321,7 +332,7 @@ def buildTopic(topicDict: Dict):
     docRefs = [ buildDocRef(docRef) for docRef in docRefList ]
 
     relatedList = getOptionalFromDict(topicDict, "RelatedTopic", [])
-    relatedTopics = [ UUID(relTopic["@Guid"]) for relTopic in relatedList ]
+    relatedTopics = [ buildRelatedTopic(relTopic) for relTopic in relatedList ]
 
     referenceLinks = getOptionalFromDict(topicDict, "ReferenceLink", [])
 
